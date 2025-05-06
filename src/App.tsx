@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useDatabase } from "./context/DatabaseContext";
 import Layout from "./components/layout/Layout";
 import Dashboard from "./pages/Dashboard";
+import NotFound from "./pages/NotFound";
 
 function App() {
   const { initialized, initializeDatabase } = useDatabase();
@@ -34,6 +35,7 @@ function App() {
       <Route path="/" element={<Layout />}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
+        <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
   );
