@@ -57,11 +57,13 @@ export async function addPatient(
   patient: Omit<Patient, "id" | "createdAt" | "updatedAt">
 ): Promise<Patient> {
   try {
+    const currentDate = new Date().toISOString();
     const { rows } = await pglite.query(
       `INSERT INTO patients (
         first_name, last_name, date_of_birth, gender, email, phone, address, 
-        medical_history, allergies, emergency_contact, insurance_provider, insurance_number
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        medical_history, allergies, emergency_contact, insurance_provider, insurance_number,
+        created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       RETURNING *`,
       [
         patient.firstName,
@@ -76,6 +78,8 @@ export async function addPatient(
         patient.emergencyContact || "",
         patient.insuranceProvider || "",
         patient.insuranceNumber || "",
+        currentDate,
+        currentDate,
       ]
     );
 
