@@ -4,6 +4,7 @@ import { useDatabase } from "./context/DatabaseContext";
 import Layout from "./components/layout/Layout";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
+import RegisterPatient from "./pages/RegisterPatient";
 
 function App() {
   const { initialized, initializeDatabase } = useDatabase();
@@ -36,6 +37,7 @@ function App() {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="*" element={<NotFound />} />
+        <Route path="register" element={<RegisterPatient />} />
       </Route>
     </Routes>
   );
