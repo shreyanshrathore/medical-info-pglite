@@ -9,6 +9,7 @@ export async function initPglite() {
     pglite = new PGlite("idb://my-pgdata"); // Use persistent IndexedDB
     await pglite.ready; // Ensure DB is ready before use
     await createSchema();
+
     console.log("PGlite initialized successfully");
   }
   return pglite;
@@ -57,13 +58,11 @@ export async function addPatient(
   patient: Omit<Patient, "id" | "createdAt" | "updatedAt">
 ): Promise<Patient> {
   try {
-    const currentDate = new Date().toISOString();
     const { rows } = await pglite.query(
       `INSERT INTO patients (
         first_name, last_name, date_of_birth, gender, email, phone, address, 
-        medical_history, allergies, emergency_contact, insurance_provider, insurance_number,
-        created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        medical_history, allergies, emergency_contact, insurance_provider, insurance_number
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *`,
       [
         patient.firstName,
@@ -78,16 +77,15 @@ export async function addPatient(
         patient.emergencyContact || "",
         patient.insuranceProvider || "",
         patient.insuranceNumber || "",
-        currentDate,
-        currentDate,
       ]
     );
 
-    // Send event to notify other tabs
-    broadcastDatabaseChange("patient_added");
+    const newPatient = mapPatientFromDb(rows[0]);
 
-    // Convert from snake_case to camelCase
-    return mapPatientFromDb(rows[0]);
+    // Broadcast the new patient data
+    broadcastDatabaseChange("patient_added", { patient: newPatient });
+
+    return newPatient;
   } catch (error) {
     console.error("Error adding patient:", error);
     throw error;
@@ -132,8 +130,8 @@ export async function executeCustomQuery(query: string): Promise<any> {
     // Execute the query
     const result = await pglite.query(query);
 
-    // Send event to notify other tabs
-    broadcastDatabaseChange("query_executed");
+    // Broadcast the query execution
+    broadcastDatabaseChange("query_executed", { query });
 
     return result;
   } catch (error) {
@@ -189,9 +187,13 @@ export function setupBroadcastChannel(): BroadcastChannel {
   return channel;
 }
 
-export function broadcastDatabaseChange(type: string): void {
+export function broadcastDatabaseChange(type: string, data?: any): void {
   const bc = setupBroadcastChannel();
-  bc.postMessage({ type, timestamp: new Date().toISOString() });
+  bc.postMessage({
+    type,
+    data,
+    timestamp: new Date().toISOString(),
+  });
 }
 
 export function closeBroadcastChannel(): void {

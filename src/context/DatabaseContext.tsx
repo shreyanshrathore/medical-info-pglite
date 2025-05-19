@@ -130,11 +130,28 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
 
       const handleMessage = async (event: MessageEvent) => {
         if (event.data && event.data.type) {
-          // Refresh data based on the event type
-          if (event.data.type === "patient_added") {
-            await refreshPatients();
-          } else if (event.data.type === "query_executed") {
-            await getHistory();
+          switch (event.data.type) {
+            case "patient_added":
+              // Update patients list with the new patient
+              if (event.data.data?.patient) {
+                setPatients((prev) => [event.data.data.patient, ...prev]);
+              } else {
+                await refreshPatients();
+              }
+              break;
+            case "query_executed":
+              await getHistory();
+              // If the query might have modified patient data, refresh patients
+              if (
+                event.data.data?.query?.toLowerCase().includes("insert") ||
+                event.data.data?.query?.toLowerCase().includes("update") ||
+                event.data.data?.query?.toLowerCase().includes("delete")
+              ) {
+                await refreshPatients();
+              }
+              break;
+            default:
+              break;
           }
         }
       };
